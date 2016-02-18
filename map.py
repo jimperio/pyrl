@@ -10,9 +10,10 @@ class Map(object):
   light_walls = True
   fov_algorithm = 0 # default
 
-  def __init__(self, width, height):
+  def __init__(self, width, height, console):
     self.width = width
     self.height = height
+    self.__con = console
     self.__map = [[Tile(True) for x in xrange(self.width)] for y in xrange(self.height)]
     self.__rooms = []
 
@@ -30,6 +31,24 @@ class Map(object):
   @property
   def rooms(self):
     return self.__rooms
+
+  def render(self):
+    for y in xrange(self.height):
+      for x in xrange(self.width):
+        visible = self.is_in_fov(x, y)
+        tile = self.__map[y][x]
+        if not visible:
+          if tile.explored:
+            if tile.blocks_sight:
+              libtcod.console_put_char_ex(self.__con, x, y, '#', libtcod.dark_grey, libtcod.black)
+            else:
+              libtcod.console_put_char_ex(self.__con, x, y, '.', libtcod.dark_grey, libtcod.black)
+        else:
+          if tile.blocks_sight:
+            libtcod.console_put_char_ex(self.__con, x, y, '#', libtcod.white, libtcod.black)
+          else:
+            libtcod.console_put_char_ex(self.__con, x, y, '.', libtcod.white, libtcod.black)
+          tile.explored = True
 
   def compute_fov(self, x, y):
     libtcod.map_compute_fov(self.__fov_map, x, y, self.torch_radius, self.light_walls, self.fov_algorithm)

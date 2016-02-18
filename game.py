@@ -14,13 +14,10 @@ class Game(object):
   def setup(self):
     libtcod.console_set_custom_font('assets/dejavu16x16_gs_tc.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
     libtcod.console_init_root(self.width, self.height, 'Pyrl', False)
-    self.__create_map()
     self.__con = libtcod.console_new(self.width, self.height)
-    self.__generate_entities()
-
-  def __create_map(self):
-    self.__map = Map(self.width, self.height)
+    self.__map = Map(self.width, self.height, self.__con)
     self.__map.setup()
+    self.__generate_entities()
 
   def __generate_entities(self):
     player_x, player_y = self.__map.rooms[0].center()
@@ -50,22 +47,7 @@ class Game(object):
       self.__recompute_fov = False
       self.__map.compute_fov(self.__player.x, self.__player.y)
 
-    for y in xrange(self.height):
-      for x in xrange(self.width):
-        visible = self.__map.is_in_fov(x, y)
-        tile = self.__map.get(x, y)
-        if not visible:
-          if tile.explored:
-            if tile.blocks_sight:
-              libtcod.console_put_char_ex(self.__con, x, y, '#', libtcod.dark_grey, libtcod.black)
-            else:
-              libtcod.console_put_char_ex(self.__con, x, y, '.', libtcod.dark_grey, libtcod.black)
-        else:
-          if tile.blocks_sight:
-            libtcod.console_put_char_ex(self.__con, x, y, '#', libtcod.white, libtcod.black)
-          else:
-            libtcod.console_put_char_ex(self.__con, x, y, '.', libtcod.white, libtcod.black)
-          tile.explored = True
+    self.__map.render()
 
     for entity in self.__entities:
       entity.draw()
