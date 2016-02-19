@@ -6,22 +6,27 @@ class Map(object):
   room_max_size = 8
   room_min_size = 4
   max_rooms = 50
+
   torch_radius = 10
   light_walls = True
-  fov_algorithm = 0 # default
+  fov_algorithm = 0
+
+  lighted_color = libtcod.white
+  dark_color = libtcod.darker_grey
+  bg_color = libtcod.black
 
   def __init__(self, width, height, console):
-    self.width = width
-    self.height = height
+    self.__width = width
+    self.__height = height
     self.__con = console
-    self.__map = [[Tile(True) for x in xrange(self.width)] for y in xrange(self.height)]
+    self.__map = [[Tile(True) for x in xrange(self.__width)] for y in xrange(self.__height)]
     self.__rooms = []
 
   def setup(self):
     self.__generate_rooms()
-    self.__fov_map = libtcod.map_new(self.width, self.height)
-    for y in range(self.height):
-      for x in range(self.width):
+    self.__fov_map = libtcod.map_new(self.__width, self.__height)
+    for y in range(self.__height):
+      for x in range(self.__width):
         tile = self.__map[y][x]
         libtcod.map_set_properties(self.__fov_map, x, y, not tile.blocks_sight, not tile.blocked)
 
@@ -33,21 +38,21 @@ class Map(object):
     return self.__rooms
 
   def render(self):
-    for y in xrange(self.height):
-      for x in xrange(self.width):
+    for y in xrange(self.__height):
+      for x in xrange(self.__width):
         visible = self.is_in_fov(x, y)
         tile = self.__map[y][x]
         if not visible:
           if tile.explored:
             if tile.blocks_sight:
-              libtcod.console_put_char_ex(self.__con, x, y, '#', libtcod.dark_grey, libtcod.black)
+              libtcod.console_put_char_ex(self.__con, x, y, '#', self.dark_color, self.bg_color)
             else:
-              libtcod.console_put_char_ex(self.__con, x, y, '.', libtcod.dark_grey, libtcod.black)
+              libtcod.console_put_char_ex(self.__con, x, y, '.', self.dark_color, self.bg_color)
         else:
           if tile.blocks_sight:
-            libtcod.console_put_char_ex(self.__con, x, y, '#', libtcod.white, libtcod.black)
+            libtcod.console_put_char_ex(self.__con, x, y, '#', self.lighted_color, self.bg_color)
           else:
-            libtcod.console_put_char_ex(self.__con, x, y, '.', libtcod.white, libtcod.black)
+            libtcod.console_put_char_ex(self.__con, x, y, '.', self.lighted_color, self.bg_color)
           tile.explored = True
 
   def compute_fov(self, x, y):
@@ -61,8 +66,8 @@ class Map(object):
     for i in xrange(self.max_rooms):
       w = libtcod.random_get_int(0, self.room_min_size, self.room_max_size)
       h = libtcod.random_get_int(0, self.room_min_size, self.room_max_size)
-      x = libtcod.random_get_int(0, 1, self.width - w - 2)
-      y = libtcod.random_get_int(0, 1, self.height - h - 2)
+      x = libtcod.random_get_int(0, 1, self.__width - w - 2)
+      y = libtcod.random_get_int(0, 1, self.__height - h - 2)
       new_room = Rect(x, y, w, h)
       intersects = False
       for prev_room in rooms:
